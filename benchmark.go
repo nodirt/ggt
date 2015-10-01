@@ -60,9 +60,9 @@ func (r *benchmarkRun) String() string {
 		if colored {
 			if r.NsPerOpChange > 0 {
 				// more time is worse
-				change = red(deltaStr)
+				change = red(change)
 			} else {
-				change = green(deltaStr)
+				change = green(change)
 			}
 		}
 		result += "\t" + change
