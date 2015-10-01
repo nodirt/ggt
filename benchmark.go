@@ -18,7 +18,7 @@ type benchmarkRun struct {
 	NsPerOpChange float32 // percentage of increase
 }
 
-// parseBenchmarkRun parses a BenchmarkRun from `go test` output line.
+// parseBenchmarkRun parses a benchmarkRun from `go test` output line.
 // Returns nil if cannot parse.
 func parseBenchmarkRun(line string) *benchmarkRun {
 	groups := benchmarkRunLineRegex.FindStringSubmatch(line)
@@ -43,36 +43,34 @@ func parseBenchmarkRun(line string) *benchmarkRun {
 	}
 }
 
-// Annotate computes r.NsPerOpChange compared to the prevRun.
-// Returns true if found a matching benchmark in prevRun.
-func (r *benchmarkRun) Annotate(prev *benchmarkRun) bool {
+// Annotate computes r.NsPerOpChange relative to prev.
+func (r *benchmarkRun) Annotate(prev *benchmarkRun) {
 	if r.NsPerOp == prev.NsPerOp {
 		r.NsPerOpChange = 0
 	} else {
 		r.NsPerOpChange = 100 * (r.NsPerOp - prev.NsPerOp) / prev.NsPerOp
 	}
-	return true
 }
 
 // String returns the original text output line, annotated with r.NsPerOpChange.
-func (r benchmarkRun) String() string {
+func (r *benchmarkRun) String() string {
 	result := r.Line
 	if r.NsPerOpChange != 0 {
-		deltaStr := fmt.Sprintf("%+f%%", r.NsPerOpChange)
+		change := fmt.Sprintf("%+f%%", r.NsPerOpChange)
 		if colored {
 			if r.NsPerOpChange > 0 {
 				// more time is worse
-				deltaStr = red(deltaStr)
+				change = red(deltaStr)
 			} else {
-				deltaStr = green(deltaStr)
+				change = green(deltaStr)
 			}
 		}
-		result += "\t" + deltaStr
+		result += "\t" + change
 	}
 	return result
 }
 
-// benchmarkRunSlice is a sorted slice of BenchmarkRun
+// benchmarkRunSlice is a sorted slice of benchmarkRun
 type benchmarkRunSlice []benchmarkRun
 
 func (s benchmarkRunSlice) Len() int {
@@ -88,11 +86,9 @@ func (s benchmarkRunSlice) Less(i, j int) bool {
 }
 
 func (s benchmarkRunSlice) Search(name string) int {
-	return sort.Search(
-		len(s),
-		func(i int) bool {
-			return s[i].Name >= name
-		})
+	return sort.Search(len(s), func(i int) bool {
+		return s[i].Name >= name
+	})
 }
 
 // Find searches for a benchmark by name.
@@ -104,7 +100,7 @@ func (s benchmarkRunSlice) Find(name string) *benchmarkRun {
 	return nil
 }
 
-// Add inserts benchmark to the slice and keeps it sorted.
+// Add inserts benchmark to s and keeps it sorted.
 // Returns error if a benchmark of the same already exists in s.
 func (s *benchmarkRunSlice) Add(benchmark *benchmarkRun) error {
 	sv := *s
@@ -114,8 +110,4 @@ func (s *benchmarkRunSlice) Add(benchmark *benchmarkRun) error {
 	}
 	*s = append(sv[:i], append([]benchmarkRun{*benchmark}, sv[i:]...)...)
 	return nil
-}
-
-type TestRun struct {
-	Benchmarks benchmarkRunSlice
 }
