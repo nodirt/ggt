@@ -49,7 +49,7 @@ func (r *benchmarkRun) Annotate(prev *benchmarkRun) bool {
 	if r.NsPerOp == prev.NsPerOp {
 		r.NsPerOpChange = 0
 	} else {
-		r.NsPerOpChange = 100 * (r.NsPerOp - prev.NsPerOp) / r.NsPerOp
+		r.NsPerOpChange = 100 * (r.NsPerOp - prev.NsPerOp) / prev.NsPerOp
 	}
 	return true
 }
