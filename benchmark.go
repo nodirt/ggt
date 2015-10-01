@@ -95,7 +95,7 @@ func (s benchmarkRunSlice) Search(name string) int {
 		})
 }
 
-// Find searches a benchmarkRun by name.
+// Find searches for a benchmark by name.
 func (s benchmarkRunSlice) Find(name string) *benchmarkRun {
 	i := s.Search(name)
 	if i < len(s) && s[i].Name == name {
