@@ -13,10 +13,16 @@ var (
 	caching     bool // true to try to load test results from cache.
 )
 
-// verbose is a log.logger for verbose output.
+func init() {
+	flag.BoolVar(&verboseFlag, "verbose", false, "print lots of stuff")
+	flag.BoolVar(&colored, "colored", true, "print colored output")
+	flag.BoolVar(&caching, "caching", true, "use on-disk cache for test results")
+}
+
+// verbose is a *log.Logger for verbose output.
 var verbose = log.New(ioutil.Discard, "", 0)
 
-// parseFlags wraps flag.CommandLine.Parse, restore "--" in args
+// parseFlags wraps flag.CommandLine.Parse, restores "--" in args
 // and processes common flags.
 // Stops the process if flags cannot be parsed.
 func parseFlags(args []string) []string {
@@ -39,12 +45,6 @@ func restoreDashes(args []string) []string {
 		args = append(result, args...)
 	}
 	return args
-}
-
-func init() {
-	flag.BoolVar(&verboseFlag, "verbose", false, "print lots of stuff")
-	flag.BoolVar(&colored, "colored", true, "print colored output")
-	flag.BoolVar(&caching, "caching", true, "use on-disk cache for test results")
 }
 
 // containsString returns true if list contains elem.
