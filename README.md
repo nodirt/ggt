@@ -2,4 +2,4 @@
 
 gtt = git + go test
 
-Shows go test time changes over time
+Answers the question _How did performance change over time?_
