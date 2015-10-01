@@ -18,7 +18,7 @@ var (
 )
 
 // trimOutput runs the command and returns its stdout output with trimmed whitespace.
-// if cmd.Stderr is not set, it is set to os.Stderr.
+// if cmd.Stderr is not set, it is set to redStderr.
 func trimOutput(cmd *exec.Cmd) (string, error) {
 	if cmd.Stderr == nil {
 		cmd.Stderr = redStderr
@@ -47,7 +47,8 @@ type lineReader interface {
 	ReadString(delim byte) (string, error)
 }
 
-// forEachLine calls f for each line in r
+// forEachLine calls f for each line in .
+// line in f may have "\n"suffix.
 func forEachLine(r lineReader, f func(line string) error) error {
 	for {
 		line, err := r.ReadString('\n')
@@ -64,6 +65,8 @@ func forEachLine(r lineReader, f func(line string) error) error {
 	return nil
 }
 
+// forEachLineOutput runs cmd and invokes f for each line in stdout.
+// line in f may have "\n" suffix.
 func forEachLineOutput(cmd *exec.Cmd, f func(line string) error) error {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
