@@ -19,6 +19,15 @@ type cmdLog struct {
 	packages      []string
 	benchRegex    string // will be passed to `go test`
 	revisionRange string // will be passed to `git log`
+	nsPerOpThreshold float64 // min abs NsPerOpChange to display
+}
+
+func (*cmdLog) name() string {
+	return "log"
+}
+
+func (*cmdLog) shortDescription() string {
+	return "git log with changed benchmark results"
 }
 
 func (*cmdLog) usage() {
@@ -40,9 +49,14 @@ func (*cmdLog) annotate(r *commitTestRun, nextRun *benchmarkRun, relPackagePath 
 	}
 }
 
-func (l *cmdLog) parseFlags(args []string) {
+func (l *cmdLog) parseFlags(args []string) error {
 	flag.StringVar(&l.benchRegex, "bench", ".", "test name regex")
+	flag.Float64Var(&l.nsPerOpThreshold, "threshold", 2.0, "minimum absolute ns/op change to display, in percents (0-100).")
 	args = parseFlags(args)
+
+	if l.nsPerOpThreshold < 0 || l.nsPerOpThreshold > 100 {
+		return fmt.Errorf("threshold must be in [0, 100] interval")
+	}
 
 	if len(args) > 0 && args[0] != "--" {
 		l.revisionRange = args[0]
@@ -53,10 +67,9 @@ func (l *cmdLog) parseFlags(args []string) {
 	}
 	l.packages = args
 	if len(l.packages) == 0 {
-		fmt.Fprintln(os.Stderr, "packages are not specified")
-		usage()
-		os.Exit(1)
+		return fmt.Errorf("packages are not specified")
 	}
+	return nil
 }
 
 // cmdLog is `ggt log` command.
@@ -65,9 +78,7 @@ func (l *cmdLog) parseFlags(args []string) {
 //    ggt log [options] [revision range] [--] [packages]
 // Options:
 //    -bench: same as -bench in `go test`
-func (l *cmdLog) run(args []string) error {
-	l.parseFlags(args)
-
+func (l *cmdLog) run() error {
 	set, err := openPackageSet(l.packages)
 	if err != nil {
 		return err
@@ -139,6 +150,9 @@ func (l *cmdLog) run(args []string) error {
 			printBenchmark := func(b *benchmarkRun) {
 				if parentRun != nil {
 					l.annotate(parentRun, b, p)
+					if float64(b.NsPerOpChange) < l.nsPerOpThreshold {
+						return
+					}
 				}
 				fmt.Println(b)
 			}

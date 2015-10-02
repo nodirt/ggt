@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 var benchmarkRunLineRegex = regexp.MustCompile(`^\s*(Benchmark[^\- ]*)(-\d+)?\s+(\d+)\s+(\d*(\.\d+)?) ns/op\s*$`)
@@ -21,6 +22,7 @@ type benchmarkRun struct {
 // parseBenchmarkRun parses a benchmarkRun from `go test` output line.
 // Returns nil if cannot parse.
 func parseBenchmarkRun(line string) *benchmarkRun {
+	line = strings.TrimSpace(line)
 	groups := benchmarkRunLineRegex.FindStringSubmatch(line)
 	if len(groups) == 0 {
 		return nil
